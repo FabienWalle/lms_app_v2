@@ -1,24 +1,34 @@
 import { useState } from "react";
+import { Image, TouchableWithoutFeedback } from "react-native";
 import { Layout, Text, Button, Input, Spinner, Icon, useStyleSheet, StyleService } from '@ui-kitten/components';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import AuthServices from "../../api/services/auth.services";
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false)
   const styles = useStyleSheet(themedStyles);
+
+  const onPasswordIconPress = () => {
+    setPasswordVisible(!passwordVisible);
+  };
+
+  const renderIconPassword = (props) => (
+    <TouchableWithoutFeedback onPress={onPasswordIconPress}>
+      <Icon {...props} name='lock'/>
+    </TouchableWithoutFeedback>
+  );
 
   const Login = async () => {
     setLoading(true)
-    await AsyncStorage.removeItem('token')
     try {
-      let res = await AuthServices.Login({ username: email, password })
-      await AsyncStorage.setItem("token", res.data.token)
-      let response = await AuthServices.Me();
-      await AsyncStorage.setItem("id", response.data.id.toString());
+      let LoginRequest = await AuthServices.Login({ username: email, password })
+      await AsyncStorage.setItem("token", LoginRequest.data.token)
+      let res = await AuthServices.Me();
+      await AsyncStorage.setItem("id", res.data.id.toString());
       navigation.navigate("BottomTabNavigator")
     } catch (error) {
       console.log(error);
@@ -36,12 +46,17 @@ const LoginScreen = ({ navigation }) => {
             </>
           ) : (
             <>
+              <Image
+                resizeMode='contain'
+                style={styles.image}
+                source={require('../../../assets/logoRI7.png')}
+              />
               <Text
                 category='h1'
                 style={styles.text}
                 status="primary"
               >
-                Se connecter
+                Connexion
               </Text>
               <Input
                 accessoryRight={<Icon name="email" />}
@@ -53,9 +68,9 @@ const LoginScreen = ({ navigation }) => {
                 autoCorrect={false}
               />
               <Input
-                accessoryRight={<Icon name="lock" status="basic" />}
+                secureTextEntry={!passwordVisible}
+                accessoryRight={renderIconPassword}
                 style={styles.input}
-                secureTextEntry
                 placeholder="password"
                 value={password}
                 onChangeText={(e) => setPassword(e)}
@@ -68,7 +83,7 @@ const LoginScreen = ({ navigation }) => {
                 size='giant'
                 onPress={Login}
               >
-                Se connecter
+                Connexion
               </Button>
             </>
           )}
@@ -85,19 +100,26 @@ const themedStyles = StyleService.create({
     justifyContent: "center",
     alignItems: "center",
     minHeight: 216,
-    paddingHorizontal: 30,
+    paddingHorizontal: 40,
   },
   text: {
-    textTransform: "uppercase",
-    marginBottom: 10,
+    textTransform: "capitalize",
+    marginVertical: 10,
+    fontWeight: "400"
   },
   input: {
     color: "success",
-    marginTop: 10
+    marginTop: 20
   },
   signInButton: {
     marginHorizontal: 16,
-    marginTop: 20
+    marginTop: 30,
+    width: "100%"
   },
+  image: {
+    width: 200,
+    height: 100,
+    marginBottom: 20
+  }
 
 });
